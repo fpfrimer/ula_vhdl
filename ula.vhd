@@ -1,0 +1,79 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity ula is
+    generic(n: integer := 6);
+    port (
+        a, b    :   in  unsigned(n - 1 downto 0);       -- Entradas
+        cin     :   in  std_logic;                      -- Carry in
+        op      :   in  std_logic_vector(3 downto 0);   -- Operação
+        f       :   out unsigned(n - 1 downto 0);       -- Saída
+        z, c_out:   out std_logic                       -- Zero e carry out
+    );
+end entity ula;
+
+architecture rtl of ula is
+
+    signal a_tmp, b_tmp, f_tmp :   unsigned(n downto 0);    -- Sinais temporários
+    
+begin
+
+    a_tmp <= '0' & a;   -- a com um bit a mais
+    b_tmp <= '0' & b;   -- b com um bit a mais
+    f <= f_tmp(n - 1 downto 0); -- Resultado
+    c_out <= f_tmp(n);  -- Carry out
+    
+    ula: process(a,b,cin) is
+    begin
+        case op is
+            -- operações aritméticas
+            when "0000" =>  -- ADD
+                if cin then     f_tmp <= a_tmp + b_tmp + 1;
+                else            f_tmp <= a_tmp + b_tmp;
+                end if;
+            when "0001" =>  -- SUBB
+                if cin then     f_tmp <= a_tmp - b_tmp;
+                else            f_tmp <= a_tmp - b_tmp - 1;
+                end if;
+            when "0010" =>  -- SUBA
+                if cin then     f_tmp <= b_tmp - a_tmp;
+                else            f_tmp <= b_tmp - a_tmp - 1;
+                end if;
+
+            -- operações lógicas
+            when "0011" => f_tmp <= a_tmp or b_tmp;		-- OR
+			when "0100" => f_tmp <= a_tmp and b_tmp;	-- AND
+			when "0101" => f_tmp <= not a_tmp;	        -- NOTA
+			when "0110" => f_tmp <= a_tmp xor b_tmp; 	-- XOR
+			when "0111" => f_tmp <= a_tmp xnor b_tmp;	-- XNOR
+
+            -- Deslocamento de bit
+            when "1000" => f_tmp <= '0' & a_tmp(n downto 1);        -- Desloca um bit para a direita
+			when "1001" => f_tmp <= a_temp(n - 1 downto 0) & '0';	-- Desloca um bit para a esquerda
+			when "1010" => f_tmp <= a_temp(n) & a_tmp(n downto 1);  -- Desloca um bit para a direita (mantem sinal)
+        
+            when others => f_tmp <= (others => '0');
+                
+        
+        end case;
+    end process ula;
+
+
+    zero: process(f_temp) is
+         variable zero   :   std_logic;
+    begin
+         
+         for i in n - 1 downto 0 loop
+             if f_temp(i) then 
+                 zero := '1';
+                 exit;
+             else
+                 zero = '0';
+             end if;
+         end loop;
+         z <= zero;
+     
+    end process zero;
+    
+end architecture rtl;
